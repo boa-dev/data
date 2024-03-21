@@ -39,7 +39,7 @@ jobs:
         with:
           name: Boa Benchmarks
           tool: "cargo"
-          output-file-path: output.txt
+          output-file-path: boa/output.txt
           external-data-json-path: ../data/bench/data.json
           auto-push: false
           skip-fetch-gh-pages: true
