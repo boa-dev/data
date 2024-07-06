@@ -58,7 +58,7 @@ jobs:
       - name: Benchmarking LibJS
         run: |
           esvu install libjs
-          ./bin/serenity-js data/bench/bench-v8/combined.js > data/bench/libjs_results.txt
+          ./bin/ladybird-js data/bench/bench-v8/combined.js > data/bench/libjs_results.txt
 
       - name: Benchmarking Boa
         run: |
