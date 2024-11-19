@@ -5,7 +5,8 @@ engines.set("boa", {});
 engines.set("v8-jitless", {});
 engines.set("sm-jitless", {});
 engines.set("kiesel", {});
-engines.set("libjs", {});
+// https://github.com/boa-dev/data/pull/13
+// engines.set("libjs", {});
 engines.set("duktape", {});
 engines.set("quickjs", {});
 
@@ -42,6 +43,7 @@ benchmarks.forEach((benchmark) => {
   engines.forEach((val, engine) => {
     data["results"][engine].push(val[benchmark]);
   });
+  data["results"]["libjs"].push(null);
   data["labels"].push(new Date().getTime());
   fs.writeFileSync(
     `./bench/results/${benchmark}.json`,
