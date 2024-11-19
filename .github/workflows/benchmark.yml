@@ -12,6 +12,7 @@ jobs:
     timeout-minutes: 60
     env:
       ESVU_PATH: ${{ github.workspace }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout the data repository
         uses: actions/checkout@v4
