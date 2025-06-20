@@ -37,6 +37,8 @@ jobs:
             ~/.cargo/registry
           key: ${{ runner.os }}-cargo-benchmarks-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Install esvu
         run: |
           npm i -g github:CanadaHonk/esvu
