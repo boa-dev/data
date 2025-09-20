@@ -13,6 +13,7 @@ jobs:
     env:
       ESVU_PATH: ${{ github.workspace }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RUSTFLAGS: "-C target-cpu=native"
     steps:
       - name: Checkout the data repository
         uses: actions/checkout@v4
@@ -38,7 +39,7 @@ jobs:
           key: ${{ runner.os }}-cargo-benchmarks-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: "24"
       - name: Install esvu
         run: |
           npm i -g github:CanadaHonk/esvu
