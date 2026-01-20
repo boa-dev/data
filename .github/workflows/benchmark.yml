@@ -42,7 +42,7 @@ jobs:
           node-version: "24"
       - name: Install esvu
         run: |
-          npm i -g github:CanadaHonk/esvu
+          npm i -g esvu
 
       - name: Benchmarking duktape
         run: |
