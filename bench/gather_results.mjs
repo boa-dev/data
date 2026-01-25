@@ -28,7 +28,15 @@ const time = new Date().getTime();
 
 // gather data from txt files
 engines.forEach((val, engine) => {
-  const results = fs.readFileSync(`./bench/${engine}_results.txt`).toString();
+  let results;
+  try {
+    results = fs.readFileSync(`./bench/${engine}_results.txt`).toString();
+  } catch {
+    for (const benchmark of benchmarks) {
+      val[engine][benchmark] = null;
+    }
+    return;
+  }
   const lines = results.split("\n");
   lines.forEach((line) => {
     const search = resultsRegex.exec(line);
