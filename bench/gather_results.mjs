@@ -33,7 +33,7 @@ engines.forEach((val, engine) => {
     results = fs.readFileSync(`./bench/${engine}_results.txt`).toString();
   } catch {
     for (const benchmark of benchmarks) {
-      val[engine][benchmark] = null;
+      val[benchmark] = null;
     }
     return;
   }
