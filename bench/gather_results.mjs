@@ -37,13 +37,20 @@ engines.forEach((val, engine) => {
     }
     return;
   }
+  const score = scoreRegex.exec(results);
+  if (score === null) {
+    for (const benchmark of benchmarks) {
+      val[benchmark] = null;
+    }
+    return;
+  }
   const lines = results.split("\n");
   lines.forEach((line) => {
     const search = resultsRegex.exec(line);
     if (search === null) return;
     val[search[1]] = parseInt(search[2]);
   });
-  val["score"] = parseInt(scoreRegex.exec(results)[1]);
+  val["score"] = parseInt(score[1]);
 });
 
 

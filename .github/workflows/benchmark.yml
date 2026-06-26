@@ -11,16 +11,15 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      ESVU_PATH: ${{ github.workspace }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RUSTFLAGS: "-C target-cpu=native"
     steps:
       - name: Checkout the data repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: data
       - name: Checkout the main Boa repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: boa-dev/boa
           ref: main
@@ -29,23 +28,25 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
+      - name: Detect CPU model
+        id: cpu
+        run: echo "id=$(grep -m1 'model name' /proc/cpuinfo | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
       - name: Cache cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             boa/target
             ~/.cargo/git
             ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-benchmarks-${{ hashFiles('**/Cargo.lock') }}
-      - uses: actions/setup-node@v4
+          key: ${{ runner.os }}-${{ steps.cpu.outputs.id }}-cargo-benchmarks-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/setup-node@v6
         with:
           node-version: "24"
-      - name: Install esvu
-        run: |
-          npm i -g esvu
 
       - name: Benchmarking duktape
+        continue-on-error: true
         run: |
+          trap 'echo "::warning::duktape benchmark failed to build or run"' ERR
           wget https://github.com/svaarala/duktape/releases/download/v2.7.0/duktape-2.7.0.tar.xz
           tar xvfJ duktape-2.7.0.tar.xz
           cd duktape-2.7.0
@@ -53,22 +54,47 @@ jobs:
           ./duk ../data/bench/bench-v8/combined.js > ../data/bench/duktape_results.txt
 
       - name: Benchmarking quickJS
+        continue-on-error: true
         run: |
-          esvu install quickjs
+          trap 'echo "::warning::QuickJS benchmark failed to install or run"' ERR
+          mkdir -p ./bin
+          version=$(curl -fsSL https://bellard.org/quickjs/binary_releases/LATEST.json | jq -r .version)
+          echo "Latest QuickJS: $version"
+          wget -qO /tmp/quickjs.zip "https://bellard.org/quickjs/binary_releases/quickjs-linux-x86_64-$version.zip"
+          unzip -oj /tmp/quickjs.zip qjs -d ./bin
+          mv ./bin/qjs ./bin/quickjs
+          chmod +x ./bin/quickjs
           ./bin/quickjs data/bench/bench-v8/combined.js > data/bench/quickjs_results.txt
 
       - name: Benchmarking V8 --jitless
+        continue-on-error: true
         run: |
-          esvu install v8
-          ./bin/v8 --jitless data/bench/bench-v8/combined.js > data/bench/v8-jitless_results.txt
+          trap 'echo "::warning::V8 benchmark failed to install or run"' ERR
+          mkdir -p ./v8
+          version=$(curl -fsSL https://storage.googleapis.com/chromium-v8/official/canary/v8-linux64-rel-latest.json | jq -r .version)
+          echo "Latest V8: $version"
+          wget -qO /tmp/v8.zip "https://storage.googleapis.com/chromium-v8/official/canary/v8-linux64-rel-$version.zip"
+          unzip -oj /tmp/v8.zip d8 icudtl.dat snapshot_blob.bin -d ./v8
+          chmod +x ./v8/d8
+          ./v8/d8 --snapshot_blob=./v8/snapshot_blob.bin --jitless data/bench/bench-v8/combined.js > data/bench/v8-jitless_results.txt
 
       - name: Benchmarking SpiderMonkey --jitless
+        continue-on-error: true
         run: |
-          esvu install jsshell
-          ./bin/sm --no-jit-backend data/bench/bench-v8/combined.js > data/bench/sm-jitless_results.txt
+          trap 'echo "::warning::SpiderMonkey benchmark failed to install or run"' ERR
+          mkdir -p ./sm
+          version=$(curl -fsSL https://product-details.mozilla.org/1.0/firefox_history_development_releases.json | jq -r 'to_entries | sort_by(.value) | last | .key')
+          echo "Latest SpiderMonkey: $version"
+          wget -qO /tmp/sm.zip "https://archive.mozilla.org/pub/firefox/releases/$version/jsshell/jsshell-linux-x86_64.zip"
+          unzip -oj /tmp/sm.zip -d ./sm
+          chmod +x ./sm/js
+          LD_LIBRARY_PATH=./sm ./sm/js --no-jit-backend data/bench/bench-v8/combined.js > data/bench/sm-jitless_results.txt
 
       - name: Benchmarking Kiesel
+        continue-on-error: true
         run: |
+          trap 'echo "::warning::Kiesel benchmark failed to install or run"' ERR
+          mkdir -p ./bin
           wget -O ./bin/kiesel "https://files.kiesel.dev/kiesel-linux-$(uname -m)-releasefast"
           chmod +x ./bin/kiesel
           ./bin/kiesel data/bench/bench-v8/combined.js > data/bench/kiesel_results.txt
@@ -100,7 +126,7 @@ jobs:
           git add bench/results
           git commit -m "Add new benchmark results" -a
       - name: Push changes
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@v1.3.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
