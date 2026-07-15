@@ -6,6 +6,7 @@ engines.set("boa", {});
 engines.set("v8-jitless", {});
 engines.set("sm-jitless", {});
 engines.set("kiesel", {});
+engines.set("porffor", {});
 engines.set("libjs", {});
 engines.set("duktape", {});
 engines.set("quickjs", {});
@@ -62,7 +63,8 @@ benchmarks.forEach((benchmark) => {
   const benchmarkNormalized = benchmark.charAt(0).toLowerCase() + benchmark.slice(1);
   postData.results[benchmarkNormalized] = {};
   engines.forEach((val, engine) => {
-    data["results"][engine].push(val[benchmark]);
+    const history = data["results"][engine] ??= Array(data["labels"].length).fill(null);
+    history.push(val[benchmark]);
     postData.results[benchmarkNormalized][engine] = val[benchmark];
   });
   data["labels"].push(time);

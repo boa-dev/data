@@ -99,6 +99,17 @@ jobs:
           chmod +x ./bin/kiesel
           ./bin/kiesel data/bench/bench-v8/combined.js > data/bench/kiesel_results.txt
 
+      - name: Benchmarking Porffor
+        continue-on-error: true
+        run: |
+          trap 'echo "::warning::Porffor benchmark failed to install or run"' ERR
+          mkdir -p ./bin
+          version=$(curl -fsSL https://api.github.com/repos/CanadaHonk/porffor/releases/latest | jq -r .tag_name)
+          echo "Latest Porffor: $version"
+          wget -qO /tmp/porffor.tar.gz "https://github.com/CanadaHonk/porffor/releases/download/$version/porffor-linux-x64.tar.gz"
+          tar -xzf /tmp/porffor.tar.gz -C ./bin
+          ./bin/porf data/bench/bench-v8/combined.js > data/bench/porffor_results.txt
+
       # - name: Benchmarking LibJS
       #   run: |
       #     esvu install libjs
